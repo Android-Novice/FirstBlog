@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" class="uk-height-1-1">
+<head>
+    <meta charset="UTF-8">
+    <title>Signin - Python Webapp</title>
+    <link rel="stylesheet" href="../static/css/uikit.min.css">
+    <link rel="stylesheet" href="../static/css/uikit.gradient.min.css">
+    <link rel="stylesheet" href="../static/css/awesome.css"/>
+    <!--<link rel="stylesheet" href="../static/css/uikit.almost-flat.min.css"></link>-->
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/js/uikit.min.js"></script>
+    <script src="../static/js/awesome.js"></script>
+    <script src="../static/js/sha1.min.js"></script>
+    <script src="../static/js/sticky.min.js"></script>
+    <script src="../static/js/vue.min.js"></script>
+    <script>
+        function validateEmail(email) {
+            var re = /^[a-z0-9\.\-\_]+\@[a-z0-9\-\_]+(\.[a-z0-9\-\_]+){1,4}$/;
+            return re.test(email.toLowerCase());
+        }
+
+        $(function () {
+            var auth = new Vue({
+                el: '#vm',
+                data: {
+                    email: '',
+                    password: ''
+                },
+                methods: {
+                    submit: function (event) {
+                        event.preventDefault();
+                        var
+                            $form = $('#vm'),
+                            email = this.email.trim().toLowerCase(),
+                            data = {
+                                email: email,
+                                password: this.password == '' ? '' : CryptoJS.SHA1(email + ':' + this.password).toString()
+                            };
+                        if (!this.password.trim()) {
+                            return $form.showFormError('please input name!');
+                        }
+                        if (!validateEmail(this.email.trim().toLowerCase())) {
+                            return $form.showFormError('please input correct email!');
+                        }
+
+                        $form.postJSON('/api/signin', data, function (err, result) {
+                            if (!err)
+                                location.assign('/');
+                        });
+                    }
+                }
+            });
+            $('#vm').show();
+        });
+    </script>
+</head>
+<body class="uk-height-1-1">
+<div class="uk-vertical-align uk-text-center uk-height-1-1">
+    <div class="uk-vertical-align-middle" style="width: 350px">
+        <p><a href="/" class="uk-icon-button"> <i class="uk-icon-html5"></i></a><a href="/">Python Webapp</a></p>
+        <form id="vm" class="uk-panel uk-panel-box uk-form" v-on="submit:submit">
+            <div class="uk-alert uk-alert-danger uk-hidden"></div>
+            <div class="uk-form-row">
+                <div class="uk-form-icon uk-width-1-1">
+                    <i class="uk-icon-envelope-o"></i>
+                    <input v-model="email" name="email" type="text" placeholder="E-mail" maxlength="50"
+                           class="uk-width-1-1 uk-form-large">
+                </div>
+            </div>
+            <div class="uk-form-row">
+                <div class="uk-form-icon uk-width-1-1">
+                    <i class="uk-icon-lock"></i>
+                    <input v-model="password" name="password" type="password" placeholder="password" maxlength="50"
+                           class="uk-width-1-1 uk-form-large">
+                </div>
+            </div>
+            <div class="uk-form-row">
+                <button type="submit" class="uk-width-1-1 uk-button uk-button-primary uk-button-large"><i
+                        class="uk-icon-sign-in"></i>Signin
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

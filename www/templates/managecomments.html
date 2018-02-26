@@ -1,0 +1,115 @@
+{% extends '__base__.html' %}
+
+{% block title %}Comment Manager{% endblock %}
+
+{% block beforehead %}
+<script>
+    function initVM(data) {
+        var vm = new Vue({
+            el: '#vm',
+            data: {
+                comments: data.comments,
+                page: data.page,
+            },
+            methods: {
+                delete_comment: function (comment) {
+                    if (confirm('are you sure to delete ' + comment.content.substring(0, comment.content.length > 15 ? 15 : comment.content) + '? it won\'t be recovered after deleted.')) {
+                        postJSON('/api/comments/' + comment.id + '/delete', function (err, r) {
+                            if (err) {
+                                return alert(err.message || err.error || err);
+                            }
+                            else {
+                                alert('delete successfully!');
+                            }
+                            refresh();
+                        });
+                    }
+                }
+            },
+        });
+        $('#vm').show();
+    }
+
+    $(function () {
+        getJSON(
+            '/api/comments',
+//            { showing_page_index: {{showing_page_index}} },
+        { showing_page_index: {{showing_page_index}} },
+        function (err, results) {
+            if (err) {
+                return fatal(err);
+            }
+            $('#loading').hide();
+            initVM(results);
+        }
+
+    )
+        ;
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="uk-width-1-1 uk-margin-bottom">
+    <div class="uk-panel uk-panel-box">
+        <ul class="uk-breadcrumb">
+            <li class="uk-active"><span> Comments </span></li>
+            <li><a href="/manage/blogs"> Blogs </a></li>
+            <li><a href="/manage/users"> Users </a></li>
+        </ul>
+    </div>
+</div>
+
+<div id="error" class="uk-width-1-1"></div>
+
+<div id="loading" class="uk-width-1-1 uk-text-center">
+    <span><i class="uk-icon-spinner uk-icon-medium uk-icon-spin"></i> Loading</span>
+</div>
+
+<div id="vm" class="uk-width-1-1">
+    <table class="uk-table">
+        <thead>
+        <tr>
+            <th class="uk-width-2-10">ID</th>
+            <th class="uk-width-2-10">User Name</th>
+            <th class="uk-width-5-10">Content</th>
+            <th class="uk-width-1-10">Operation</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-repeat="comment:comments">
+            <td>
+                <a target="_blank" v-attr="href:'/blog/'+comment.blog_id" v-text="comment.id"></a>
+            </td>
+            <td>
+                <span v-text="comment.user_name"></span>
+            </td>
+            <td>
+                <span v-text="comment.content"></span>
+            </td>
+            <td>
+                <a href="#0" v-on="click: delete_comment(comment)"><i class="uk-icon-trash-o"></i> </a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <!--<div v-component="pagination" v-with="page"></div>-->
+    <div>
+        <ul class="uk-pagination">
+            {% if page.has_previous %}
+            <li><a href="{{ url }}?showing_page_index={{ page.showing_page_index - 1 }}"><i
+                    class="uk-icon-angle-double-left"></i></a></li>
+            {% else %}
+            <li class="uk-disabled"><span><i class="uk-icon-angle-double-left"></i></span></li>
+            {% endif %}
+            <li class="uk-active"><span>{{ page.showing_page_index }}</span></li>
+            {% if page.has_next %}
+            <li><a href="{{ url }}?showing_page_index={{ page.showing_page_index + 1 }}"><i
+                    class="uk-icon-angle-double-right"></i></a></li>
+            {% else %}
+            <li class="uk-disabled"><span><i class="uk-icon-angle-double-right"></i></span></li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends '__base__.html' %}
+
+{% block title %}User Manager{% endblock %}
+
+{% block beforehead %}
+<script>
+    function initVM(data) {
+        var vm = new Vue({
+            el: '#vm',
+            data: {
+                users: data.users,
+                page: data.page,
+            },
+            methods: {
+                delete_user: function (user) {
+                    if (confirm('are you sure to delete ' + user.name + '? it won\'t be recovered after deleted.')) {
+                        postJSON('/api/users/' + user.id + '/delete', function (err, r) {
+                            if (err) {
+                                return alert(err.message || err.error || err);
+                            }
+                            else {
+                                alert('delete successfully!');
+                            }
+                            refresh();
+                        });
+                    }
+                }
+            },
+        });
+        $('#vm').show();
+    }
+
+    $(function () {
+        getJSON(
+            '/api/users',
+//            { showing_page_index: {{showing_page_index}} },
+            { showing_page_index: {{showing_page_index}} },
+        function (err, results) {
+            if (err) {
+                return fatal(err);
+            }
+            $('#loading').hide();
+            initVM(results);
+        }
+
+    )
+        ;
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="uk-width-1-1 uk-margin-bottom">
+    <div class="uk-panel uk-panel-box">
+        <ul class="uk-breadcrumb">
+            <li><a href="/manage/comments"> Comments </a></li>
+            <li><a href="/manage/blogs"> Blogs </a></li>
+            <!--<li class="uk-active"><span> Blogs </span></a></li>-->
+            <li class="uk-active"><span> Users </span></li>
+        </ul>
+    </div>
+</div>
+
+<div id="error" class="uk-width-1-1"></div>
+
+<div id="loading" class="uk-width-1-1 uk-text-center">
+    <span><i class="uk-icon-spinner uk-icon-medium uk-icon-spin"></i> Loading</span>
+</div>
+
+<div id="vm" class="uk-width-1-1">
+    <table class="uk-table">
+        <thead>
+        <tr>
+            <th class="uk-width-3-10">ID</th>
+            <th class="uk-width-1-10">Name</th>
+            <th class="uk-width-2-10">Email</th>
+            <th class="uk-width-3-10">Note</th>
+            <th class="uk-width-1-10">Operation</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-repeat="user:users">
+            <td>
+                <span v-text="user.id"></span>
+            </td>
+            <td>
+                <span v-text="user.name"></span>
+                <span v-if="user.is_admin"><i class="uk-icon-key"></i>(Administrator)</span>
+            </td>
+            <td>
+                <span v-text="user.email"></span>
+            </td>
+            <td>
+                <span v-text="user.note"></span>
+            </td>
+            <td>
+                <a v-if="!user.is_admin" href="#0" v-on="click: delete_user(user)"><i class="uk-icon-trash-o"></i> </a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <div>
+        <ul class="uk-pagination">
+            {% if page.has_previous %}
+            <li><a href="{{ url }}?showing_page_index={{ page.showing_page_index - 1 }}"><i
+                    class="uk-icon-angle-double-left"></i></a></li>
+            {% else %}
+            <li class="uk-disabled"><span><i class="uk-icon-angle-double-left"></i></span></li>
+            {% endif %}
+            <li class="uk-active"><span>{{ page.showing_page_index }}</span></li>
+            {% if page.has_next %}
+            <li><a href="{{ url }}?showing_page_index={{ page.showing_page_index + 1 }}"><i
+                    class="uk-icon-angle-double-right"></i></a></li>
+            {% else %}
+            <li class="uk-disabled"><span><i class="uk-icon-angle-double-right"></i></span></li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
